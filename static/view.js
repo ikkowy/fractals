@@ -1,5 +1,7 @@
 controller = new WebSocket('ws://localhost:8080/view');
 
+controller.binaryType = 'arraybuffer';
+
 var started = false;
 
 var frame_index = 0;
@@ -20,7 +22,9 @@ function send_calculate() {
     controller.send(JSON.stringify(
         {
             event : 'calculate',
-            frame_index: frame_index++
+            frame_index : frame_index++,
+            pixel_width : 500,
+            pixel_height : 500
         }
     ));
 }
@@ -75,8 +79,6 @@ controller.onmessage = function(e) {
 
             } else if (event === 'ready' && started) {
 
-                console.log('received ready');
-
                 send_calculate();
 
             }
@@ -85,7 +87,13 @@ controller.onmessage = function(e) {
 
     } else {
 
-        message.text().then(text => { console.log(text); })
+        var canvas = document.getElementById('screen');
+
+        var context = canvas.getContext("2d");
+
+        const imageData = new ImageData(new Uint8ClampedArray(message), 500, 500);
+
+        context.putImageData(imageData, 0, 0);
 
     }
 }

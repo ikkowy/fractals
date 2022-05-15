@@ -4,6 +4,8 @@ import asyncio
 import json
 import websockets
 
+import numpy as np
+
 controller = None
 
 async def send_ready():
@@ -24,8 +26,20 @@ async def send_frame(frame):
 
 async def calculate(data):
     frame_index = data.get('frame_index')
+    pixel_width = data.get('pixel_width')
+    pixel_height = data.get('pixel_height')
+
     print('calculating frame', frame_index)
-    await send_frame(bytes(str(frame_index), 'utf-8'))
+
+    array = np.empty([pixel_width, pixel_height], dtype = np.uint32)
+
+    g = frame_index % 256
+
+    f = np.vectorize(lambda x: np.frombuffer(bytes([g, g, g, 255]), dtype=np.uint32))
+
+    frame = f(array).tobytes()
+
+    await send_frame(frame)
     await send_waiting()
 
 async def node():
