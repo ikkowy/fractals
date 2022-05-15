@@ -13,9 +13,9 @@ import json
 #-------------------------------------------------------------------------------
 
 view = None
-nodes_count = 0
-nodes_ready = deque()
-nodes_working = deque()
+nodes = set()
+nodes_ready = set()
+queue = deque()
 
 #-------------------------------------------------------------------------------
 
@@ -24,10 +24,27 @@ def send_info():
     if view is not None:
         view.write_message(json.dumps(
             {
-                'action' : 'info',
-                'nodes_count' : nodes_count
+                'event' : 'info',
+                'nodes_count' : len(nodes)
             }
         ))
+
+def send_ready():
+    global view
+    if view is not None:
+        view.write_message(json.dumps(
+            { 'event' : 'ready' }
+        ))
+
+def send_nudge(node):
+    node.write_message(json.dumps(
+        { 'event' : 'nudge' }
+    ))
+
+def send_transfer(node):
+    node.write_message(json.dumps(
+        { 'event' : 'transfer' }
+    ))
 
 #-------------------------------------------------------------------------------
 
@@ -46,7 +63,29 @@ class ViewHandler(tornado.websocket.WebSocketHandler):
             send_info()
 
     def on_message(self, message):
-        self.write_message(message)
+        global nodes, nodes_ready, queue
+
+        if isinstance(message, str):
+
+            data = json.loads(message)
+
+            if 'event' in data:
+
+                event = data['event']
+
+                if event == 'start':
+                    print('received start')
+                    for node in nodes:
+                        send_nudge(node)
+
+                if event == 'stop':
+                    print('received stop')
+
+                elif event == 'calculate':
+                    print('received calculate')
+                    node = nodes_ready.pop()
+                    queue.append(node)
+                    node.write_message(message)
 
     def on_close(self):
         global view
@@ -58,23 +97,57 @@ class ViewHandler(tornado.websocket.WebSocketHandler):
 
 class NodeHandler(tornado.websocket.WebSocketHandler):
     alive = True
+    waiting = False
 
     def open(self):
-        global nodes_ready, nodes_count
+        global nodes
         print('node connected')
-        nodes_ready.appendleft(self)
-        nodes_count += 1
+        nodes.add(self)
         send_info()
 
     def on_message(self, message):
-        if view is not None:
-            view.write_message(message)
+        global nodes_ready, queue
+
+        if isinstance(message, str):
+
+            data = json.loads(message)
+
+            if 'event' in data:
+
+                event = data['event']
+
+                if event == 'ready':
+                    print('received ready')
+                    self.waiting = False
+                    nodes_ready.add(self)
+                    send_ready()
+
+                elif event == 'waiting':
+                    print('received waiting')
+                    self.waiting = True
+                    while queue:
+                        if queue[0].waiting:
+                            node = queue.popleft()
+                            if node.alive:
+                                send_transfer(node)
+                        else: break
+
+        else:
+
+            print('transmitting frame to view')
+
+            view.write_message(message, binary = True)
 
     def on_close(self):
-        global nodes_count
+        global nodes, nodes_ready, queue
         print('node disconnected')
-        alive = False
-        nodes_count -= 1
+        self.alive = False
+        nodes.remove(self)
+        if self in nodes_ready:
+            nodes_ready.remove(self)
+        if self in queue:
+            while self in queue:
+                queue.remove(self)
         send_info()
 
 #-------------------------------------------------------------------------------

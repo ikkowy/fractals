@@ -1,26 +1,97 @@
-web_socket = new WebSocket("ws://localhost:8080/view");
+controller = new WebSocket('ws://localhost:8080/view');
 
-web_socket.onopen = function() {
-    console.log("web socket opened");
+var started = false;
+
+var frame_index = 0;
+
+function send_start() {
+    controller.send(JSON.stringify(
+        { event : 'start' }
+    ));
 }
 
-web_socket.onmessage = function(event) {
-    var message = event.data
-    console.log(typeof(message));
-    console.log(message)
+function send_stop() {
+    controller.send(JSON.stringify(
+        { event : 'stop' }
+    ));
+}
 
-    if (typeof message === "string") {
-        var json = JSON.parse(message);
-        if ("action" in json) {
-            if (json.action === "info") {
-                if ("nodes_count" in json) {
-                    document.getElementById("nodes_count").innerHTML = json.nodes_count;
-                }
-            }
+function send_calculate() {
+    controller.send(JSON.stringify(
+        {
+            event : 'calculate',
+            frame_index: frame_index++
         }
+    ));
+}
+
+function show_frame(frame) {
+}
+
+function start() {
+    if (!started) {
+        started = true;
+        send_start();
     }
 }
 
-web_socket.onclose = function() {
-    console.log("web socket closed");
+function stop() {
+    if (started) {
+        started = false;
+        send_stop();
+    }
 }
+
+function update_button_start_stop() {
+    document.getElementById('button-start-stop').innerHTML = started ? 'STOP' : 'START';
+}
+
+function toggle_start_stop() {
+    if (started) stop();
+    else start();
+    update_button_start_stop();
+}
+
+controller.onopen = function() {
+    console.log('controller connected');
+}
+
+controller.onmessage = function(e) {
+    var message = e.data
+
+    if (typeof message === 'string') {
+
+        var data = JSON.parse(message);
+
+        if ('event' in data) {
+
+            var event = data.event;
+
+            if (event === 'info') {
+
+                if ('nodes_count' in data) {
+                    document.getElementById('label-nodes-count').innerHTML = data.nodes_count;
+                }
+
+            } else if (event === 'ready' && started) {
+
+                console.log('received ready');
+
+                send_calculate();
+
+            }
+
+        }
+
+    } else {
+
+        message.text().then(text => { console.log(text); })
+
+    }
+}
+
+controller.onclose = function() {
+    console.log('controller disconnected');
+}
+
+update_button_start_stop();
