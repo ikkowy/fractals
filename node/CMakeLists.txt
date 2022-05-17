@@ -13,5 +13,6 @@ pkg_check_modules(JSONCPP REQUIRED jsoncpp)
 
 add_executable(node node.cpp websocket.h websocket.cpp)
 
-target_link_libraries(node
-    ${JSONCPP_LIBRARIES})
+target_link_libraries(node ${JSONCPP_LIBRARIES} boost_system pthread)
+
+target_compile_options(node PRIVATE ${JSONCPP_CFLAGS})

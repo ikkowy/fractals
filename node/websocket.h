@@ -12,7 +12,7 @@ typedef struct ws_connection ws_connection;
 
 typedef void (*ws_message_callback)(
     ws_connection* connection,
-    void* data,
+    const void* data,
     size_t size,
     bool binary
 );

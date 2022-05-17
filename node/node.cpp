@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 #include <sstream>
 #include <vector>
 
@@ -91,7 +92,7 @@ static void calculate(const Json::Value& data, Frame& frame) {
 
 static void on_message(
     ws_connection* connection,
-    void* message,
+    const void* message,
     size_t size,
     __attribute__((unused)) bool binary
 ) {
