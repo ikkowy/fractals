@@ -1,6 +1,8 @@
+#include <complex>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <sstream>
 #include <vector>
 
 #include <json/json.h>
@@ -37,36 +39,59 @@ private:
 };
 
 inline uint32_t rgb_color(uint8_t r, uint8_t g, uint8_t b) {
-    return (uint32_t) r << 24 | (uint32_t) g << 16 | (uint32_t) b << 8 | 0xff;
-    //return htonl(color);
+    uint32_t color;
+    ((uint8_t*) &color)[0] = r;
+    ((uint8_t*) &color)[1] = g;
+    ((uint8_t*) &color)[2] = b;
+    ((uint8_t*) &color)[3] = 0xff;
+    return color;
 }
 
 static bool waiting = false;
 
 static Frame frame;
 
-void send_ready(ws_connection* connection) {
+static void julia(
+    unsigned int pixel_width,
+    unsigned int pixel_height,
+    std::complex<double> c
+) {
+    frame = Frame(pixel_width, pixel_height);
+
+    auto f = [](std::complex<double> z, std::complex<double> c) { return z * z + c; };
+
+    for (unsigned int x = 0; x < pixel_width; x++) {
+        for (unsigned int y = 0; y < pixel_height; y++) {
+            double a = 4.0 * static_cast<double>(x) / static_cast<double>(pixel_width) - 2.0;
+            double b = 4.0 * static_cast<double>(y) / static_cast<double>(pixel_height) - 2.0;
+            std::complex<double> z(a, b);
+
+            int i;
+
+            for (i = 0; i < 32; i++) {
+                z = f(z, c);
+                if (std::abs(z) > 16.0) break;
+            }
+
+            frame.set_pixel(x, y, rgb_color(i / 32.0 * 255, i / 32.0 * 255, i / 32.0 * 255));
+        }
+    }
+}
+
+static void send_ready(ws_connection* connection) {
     ws_send_string(connection, "{ \"event\" : \"ready\" }");
 }
 
-void send_waiting(ws_connection* connection) {
+static void send_waiting(ws_connection* connection) {
     ws_send_string(connection, "{ \"event\" : \"waiting\" }");
 }
 
-void calculate(ws_connection* connection, const Json::Value& data) {
+static void calculate(ws_connection* connection, const Json::Value& data) {
     unsigned int frame_index = data["frame_index"].asInt();
     unsigned int pixel_width = data["pixel_width"].asInt();
     unsigned int pixel_height = data["pixel_height"].asInt();
 
-    printf("calculating frame %d x %d\n", (int) pixel_width, (int) pixel_height);
-
-    frame = Frame(pixel_width, pixel_height);
-
-    for (unsigned int x = 0; x < pixel_width; x++) {
-        for (unsigned int y = 0; y < pixel_height; y++) {
-            frame.set_pixel(x, y, rgb_color(frame_index % 256, 0, 0));
-        }
-    }
+    julia(pixel_width, pixel_height, static_cast<double>(frame_index) / 1000.0);
 }
 
 static void on_message(
@@ -98,7 +123,18 @@ static void on_message(
     }
 }
 
-int main() {
-    ws_run_client("ws://localhost:8080/node", on_message);
+int main(int argc, char* argv[]) {
+    if (argc != 3) {
+        std::fprintf(stderr, "usage: %s <host> <port>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    const char* host = argv[1];
+    int port = std::atoi(argv[2]);
+    std::stringstream uri;
+    uri << "ws://" << host << ":" << port << "/node";
+
+    ws_run_client(uri.str().c_str(), on_message);
+
     return EXIT_SUCCESS;
 }
