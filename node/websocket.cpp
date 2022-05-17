@@ -21,7 +21,9 @@ static void message_handler(
     websocketpp::connection_hdl hdl,
     websocketpp::config::asio_client::message_type::ptr msg
 ) {
-    ws_connection connection = { .client = client, .hdl = hdl };
+    ws_connection connection;
+    connection.client = client;
+    connection.hdl = hdl;
     auto payload = msg->get_payload();
     auto opcode = msg->get_opcode();
     bool binary = (opcode == websocketpp::frame::opcode::text);

@@ -13,10 +13,11 @@ class Frame {
 
 public:
 
-    Frame() = default;
-
-    Frame(unsigned int width, unsigned int height)
-        : pixels(width * height), width{width}, height{height} {}
+    void resize(unsigned int width, unsigned int height) {
+        this->width = width;
+        this->height = height;
+        pixels.resize(width * height);
+    }
 
     inline void set_pixel(unsigned int x, unsigned int y, uint32_t value) {
         pixels[x * width + y] = value;
@@ -51,14 +52,24 @@ static bool waiting = false;
 
 static Frame frame;
 
-static void julia(
-    unsigned int pixel_width,
-    unsigned int pixel_height,
-    std::complex<double> c
-) {
-    frame = Frame(pixel_width, pixel_height);
+static void send_ready(ws_connection* connection) {
+    ws_send_string(connection, "{ \"event\" : \"ready\" }");
+}
 
-    auto f = [](std::complex<double> z, std::complex<double> c) { return z * z + c; };
+static void send_waiting(ws_connection* connection) {
+    ws_send_string(connection, "{ \"event\" : \"waiting\" }");
+}
+
+static void calculate(const Json::Value& data, Frame& frame) {
+    unsigned int frame_index = data["frame_index"].asInt();
+    unsigned int pixel_width = data["pixel_width"].asInt();
+    unsigned int pixel_height = data["pixel_height"].asInt();
+
+    frame.resize(pixel_width, pixel_height);
+
+    std::complex<double> c = static_cast<double>(frame_index) / 1000.0;
+
+    const auto f = [](std::complex<double> z, std::complex<double> c) { return z * z + c; };
 
     for (unsigned int x = 0; x < pixel_width; x++) {
         for (unsigned int y = 0; y < pixel_height; y++) {
@@ -78,27 +89,11 @@ static void julia(
     }
 }
 
-static void send_ready(ws_connection* connection) {
-    ws_send_string(connection, "{ \"event\" : \"ready\" }");
-}
-
-static void send_waiting(ws_connection* connection) {
-    ws_send_string(connection, "{ \"event\" : \"waiting\" }");
-}
-
-static void calculate(ws_connection* connection, const Json::Value& data) {
-    unsigned int frame_index = data["frame_index"].asInt();
-    unsigned int pixel_width = data["pixel_width"].asInt();
-    unsigned int pixel_height = data["pixel_height"].asInt();
-
-    julia(pixel_width, pixel_height, static_cast<double>(frame_index) / 1000.0);
-}
-
 static void on_message(
     ws_connection* connection,
     void* message,
     size_t size,
-    bool binary
+    __attribute__((unused)) bool binary
 ) {
     Json::CharReaderBuilder builder;
     const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
@@ -110,7 +105,7 @@ static void on_message(
         if (event == "nudge") {
             send_ready(connection);
         } else if (event == "calculate") {
-            calculate(connection, data);
+            calculate(data, frame);
             send_waiting(connection);
             waiting = true;
         } else if (event == "transfer") {
