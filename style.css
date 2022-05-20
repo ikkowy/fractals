@@ -1,0 +1,18 @@
+body {
+    text-align: center;
+    background-color: darkslategray;
+    color: white;
+}
+
+button {
+    height: 2em;
+    width: 8em;
+}
+
+button:hover {
+    border: solid;
+}
+
+div {
+    margin-top: 4px;
+}
