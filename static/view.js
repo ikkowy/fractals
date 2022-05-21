@@ -1,3 +1,5 @@
+import {next, x, y} from "./rpath";
+
 controller = new WebSocket('ws://localhost:8080/view');
 
 controller.binaryType = 'arraybuffer';
@@ -78,7 +80,7 @@ controller.onmessage = function(e) {
 
             } else if (event === 'ready' && started) {
 
-                send_calculate();
+                send_calculate(x, y);
 
             }
 
@@ -93,6 +95,8 @@ controller.onmessage = function(e) {
         const imageData = new ImageData(new Uint8ClampedArray(message), 500, 500);
 
         context.putImageData(imageData, 0, 0);
+
+        next();
 
     }
 }

@@ -16,3 +16,17 @@ button:hover {
 div {
     margin-top: 4px;
 }
+
+canvas {
+    position: relative;
+}
+
+#screen {
+    z-index: 1;
+    margin-right: -250px;
+}
+
+#lorenz_screen {
+    z-index: 5;
+    margin-left: -250px;
+}
