@@ -62,13 +62,17 @@ static void send_waiting(ws_connection* connection) {
 }
 
 static void calculate(const Json::Value& data, Frame& frame) {
-    unsigned int frame_index = data["frame_index"].asInt();
-    unsigned int pixel_width = data["pixel_width"].asInt();
-    unsigned int pixel_height = data["pixel_height"].asInt();
+    unsigned int frame_index = data["frame_index"].asUInt();
+    unsigned int pixel_width = data["pixel_width"].asUInt();
+    unsigned int pixel_height = data["pixel_height"].asUInt();
+    double c_real = data["c_real"].asDouble();
+    double c_imag = data["c_imag"].asDouble();
+
+    std::printf("calculating frame %d\n", frame_index);
+
+    std::complex<double> c(c_real, c_imag);
 
     frame.resize(pixel_width, pixel_height);
-
-    std::complex<double> c = static_cast<double>(frame_index) / 1000.0;
 
     const auto f = [](std::complex<double> z, std::complex<double> c) { return z * z + c; };
 

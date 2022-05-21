@@ -18,18 +18,17 @@ function send_stop() {
     ));
 }
 
-function send_calculate() {
+function send_calculate(c_real, c_imag) {
     controller.send(JSON.stringify(
         {
             event : 'calculate',
             frame_index : frame_index++,
             pixel_width : 500,
-            pixel_height : 500
+            pixel_height : 500,
+            c_real : c_real,
+            c_imag : c_imag
         }
     ));
-}
-
-function show_frame(frame) {
 }
 
 function start() {
