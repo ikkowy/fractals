@@ -40,9 +40,9 @@ controller = new WebSocket('ws://localhost:8080/view');
 
 controller.binaryType = 'arraybuffer';
 
-var started = false;
+let started = false;
 
-var frame_index = 0;
+let frame_index = 0;
 
 function send_start() {
     controller.send(JSON.stringify(
@@ -98,15 +98,15 @@ controller.onopen = function() {
 }
 
 controller.onmessage = function(e) {
-    var message = e.data
+    const message = e.data;
 
     if (typeof message === 'string') {
 
-        var data = JSON.parse(message);
+        const data = JSON.parse(message);
 
         if ('event' in data) {
 
-            var event = data.event;
+            const event = data.event;
 
             if (event === 'info') {
 
@@ -116,8 +116,8 @@ controller.onmessage = function(e) {
 
             } else if (event === 'ready' && started) {
 
-                var c_real = 20 * x / 500;
-                var c_imag = 20 * y / 500;
+                const c_real = 20 * x / 500;
+                const c_imag = 20 * y / 500;
                 send_calculate(c_real, c_imag);
 
             }
@@ -126,9 +126,9 @@ controller.onmessage = function(e) {
 
     } else {
 
-        var canvas = document.getElementById('screen');
+        const canvas = document.getElementById('screen');
 
-        var context = canvas.getContext("2d");
+        const context = canvas.getContext("2d");
 
         const imageData = new ImageData(new Uint8ClampedArray(message), 500, 500);
 
