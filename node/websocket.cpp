@@ -39,8 +39,8 @@ void ws_run_client(
     try {
         client_type client;
 
-        client.set_access_channels(websocketpp::log::alevel::all);
-        client.clear_access_channels(websocketpp::log::alevel::frame_payload);
+        client.clear_access_channels(websocketpp::log::alevel::frame_header | websocketpp::log::alevel::frame_payload);
+        client.clear_access_channels(websocketpp::log::alevel::all);
 
         client.init_asio();
 

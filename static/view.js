@@ -1,4 +1,40 @@
-import {next, x, y} from "./rpath";
+let x = Math.random() * 60 - 30;
+let y = Math.random() * 60 - 30;
+let z = Math.random() * 60 - 30;
+
+const a = 15;
+const b = 42;
+const c = 2;
+
+const canvas = document.getElementById('screen');
+const ctx = canvas.getContext("2d");
+
+ctx.fillStyle = "transparent";
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+function point(x, y) {
+    ctx.fillStyle = "red";
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, 2 * Math.PI);
+    ctx.fill();
+}
+
+function step() {
+    let dt = 0.001;
+    let dx = (a * (y - x)) * dt;
+    let dy = (x * (b - z) - y) * dt;
+    let dz = (x * y - c * z) * dt;
+    x += dx;
+    y += dy;
+    z += dz;
+}
+
+function next() {
+    step();
+    point(6 * x + 250, 6 * y + 250);
+}
+
+// -----------------------------------------------------------------------------
 
 controller = new WebSocket('ws://localhost:8080/view');
 
@@ -80,7 +116,9 @@ controller.onmessage = function(e) {
 
             } else if (event === 'ready' && started) {
 
-                send_calculate(x, y);
+                var c_real = 20 * x / 500;
+                var c_imag = 20 * y / 500;
+                send_calculate(c_real, c_imag);
 
             }
 

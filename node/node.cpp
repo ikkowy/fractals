@@ -62,13 +62,10 @@ static void send_waiting(ws_connection* connection) {
 }
 
 static void calculate(const Json::Value& data, Frame& frame) {
-    unsigned int frame_index = data["frame_index"].asUInt();
     unsigned int pixel_width = data["pixel_width"].asUInt();
     unsigned int pixel_height = data["pixel_height"].asUInt();
     double c_real = data["c_real"].asDouble();
     double c_imag = data["c_imag"].asDouble();
-
-    std::printf("calculating frame %d\n", frame_index);
 
     std::complex<double> c(c_real, c_imag);
 

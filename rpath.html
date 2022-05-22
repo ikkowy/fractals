@@ -27,11 +27,7 @@ ctx.fillStyle = "black";
 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 function point(x, y) {
-    //clear
-    //ctx.fillStyle = "black";
-    //ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.save();//?
+    ctx.save();
     ctx.fillStyle = "red";
     ctx.beginPath();
     ctx.arc(x, y, 1, 0, 2 * Math.PI);
@@ -39,7 +35,7 @@ function point(x, y) {
 }
 
 function step() {
-    let dt = 0.01;
+    let dt = 0.005;
     let dx = (a * (y - x)) * dt;
     let dy = (x * (b - z) - y) * dt;
     let dz = (x * y - c * z) * dt;

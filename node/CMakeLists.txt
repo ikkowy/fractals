@@ -5,7 +5,7 @@ project(node)
 if(MSVC)
     add_compile_options(/W4 /WX)
 else()
-    add_compile_options(-Wall -Wextra -pedantic)
+    add_compile_options(-O2 -Wall -Wextra -pedantic)
 endif()
 
 find_package(PkgConfig REQUIRED)
