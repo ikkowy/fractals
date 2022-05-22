@@ -23,10 +23,11 @@ canvas {
 
 #screen {
     z-index: 1;
-    margin-right: -250px;
+    margin-left: 250px;
+    margin-right: 250px;
 }
 
 #lorenz_screen {
     z-index: 5;
-    margin-left: -250px;
+    margin-top: -500px;
 }
